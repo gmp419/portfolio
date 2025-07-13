@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cover Letter Generator - Gaurang Patel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFD;
+            color: #1a202c;
+        }
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-up.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.8s ease-out;
+        }
+        .fade-in.animate {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-gray-800">Gaurang Patel</div>
+            <div>
+                <a href="index.html" class="text-teal-600 hover:text-teal-700 transition-colors duration-300">← Back to Resume</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="cover-letter-generator" class="py-16 fade-in">
+            <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">✨ AI Cover Letter Generator</h2>
+                <p class="text-gray-600 mt-2">Paste a job description below to generate a tailored cover letter.</p>
+            </div>
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up">
+                <div class="mb-6">
+                    <label for="jobDescription" class="block text-gray-700 text-sm font-bold mb-2">Job Description:</label>
+                    <textarea id="jobDescription" rows="8" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y" placeholder="Paste the job description here..."></textarea>
+                </div>
+                <button id="generateCoverLetterBtn" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-300 flex items-center justify-center">
+                    Generate Cover Letter
+                    <span id="loadingSpinner" class="hidden ml-2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+                <div id="coverLetterOutput" class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200 text-gray-800 whitespace-pre-wrap min-h-[150px] overflow-auto">
+                    Your generated cover letter will appear here.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mt-8 text-sm text-gray-400">&copy; 2025 Gaurang Patel. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // General Fade-in-up and Fade-in animations on scroll
+            const animatedElements = document.querySelectorAll('.fade-in-up, .fade-in');
+            const animationObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        observer.unobserve(entry.target);
+                    } 
+                });
+            }, { threshold: 0.1 }); 
+
+            animatedElements.forEach(element => animationObserver.observe(element));
+
+            // Gemini API Integration for Cover Letter Generation
+            const generateCoverLetterBtn = document.getElementById('generateCoverLetterBtn');
+            const jobDescriptionInput = document.getElementById('jobDescription');
+            const coverLetterOutput = document.getElementById('coverLetterOutput');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            generateCoverLetterBtn.addEventListener('click', async () => {
+                const jobDescription = jobDescriptionInput.value.trim();
+                if (!jobDescription) {
+                    coverLetterOutput.innerText = "Please paste a job description to generate a cover letter.";
+                    return;
+                }
+
+                loadingSpinner.classList.remove('hidden');
+                generateCoverLetterBtn.disabled = true;
+                coverLetterOutput.innerText = "Generating cover letter...";
+
+                // Hardcoded resume content for the LLM prompt
+                const resumeContent = `
+                    Gaurang Patel
+                    SOFTWARE DEVELOPER
+                    Email: patel7483g@gmail.com | Phone: +1 (306) 807-9114 | Location: Calgary, AB | Portfolio: http://quickpayments.ca/
+
+                    SUMMARY:
+                    A seasoned Software Engineer with 4 years of extensive experience, specializing in the development of highly efficient and scalable web applications. Possessing a proven track record in full-stack development, leveraging technologies such as Laravel, Vue.js, and React.js. Dedicated to crafting clean, responsive code and committed to delivering high-quality, impactful solutions that significantly enhance user experience. Notable achievements include the successful conception and development of a comprehensive payment platform, substantial optimization of website performance, and significant reductions in cloud infrastructure costs.
+
+                    EXPERIENCE:
+                    Lead Software Architect & Founder | QuickPayments | Edmonton, AB | April 2025 – Present
+                    - Spearheaded the end-to-end development of QuickPayments, a comprehensive payment platform.
+                    - Designed and implemented the core architecture using Laravel, Vue.js, and Inertia.js.
+                    - Integrated advanced payment functionalities including Laravel Stripe Connect and Stripe.
+                    - Utilized Laravel Spark for subscription billing and user management.
+                    - Managed cloud infrastructure on Laravel Cloud for high availability and scalability.
+                    - Responsible for all aspects of development, from conceptualization to deployment.
+
+                    Software Developer | Timeless Veterinary Systems | PEI, Canada | May 2021 – Present
+                    - Spearheaded cloud migration to AWS, reducing operational costs by 25%.
+                    - Developed a robust SAAS platform using Laravel and Vue.js, increasing user engagement by 20%.
+                    - Integrated CI/CD pipelines, reducing deployment time by 40%.
+                    - Collaborated with data scientists to implement machine learning models.
+                    - Automated unit testing with Jest, increasing test coverage by 20%.
+                    - Played a key role in developing a RESTful API for mobile applications.
+                    - Designed and implemented a real-time chat application using WebSocket technology.
+
+                    SKILLS:
+                    Methodologies: Agile, Waterfall, Scrum
+                    Programming Languages: JavaScript, PHP, Python
+                    Web Frameworks: Laravel, Vue.js, React.js, Inertia.js, Bootstrap, Tailwind, JQuery, Express.js
+                    Cloud Platforms: AWS (EC2, S3, RDS), Google Cloud Platform (GCP), Laravel Cloud
+                    Version Control: Git, GitHub
+                    Database Management: MySQL, PostgreSQL, MongoDB
+                    Tools: Visual Studio Code, PyCharm, JIRA, Confluence, JetBrains
+                    Testing Frameworks: Jest, Selenium, PHPUnit, Pest
+                    DevOps: Docker, Kubernetes, GitHub Actions, Jenkins
+                    API Development: RESTful APIs, Web Services, Node.js, Stripe, Pusher, Webhooks
+
+                    EDUCATION:
+                    Diploma in Computer Science | University of Regina, Regina, SK | September 2020
+
+                    CERTIFICATION:
+                    AWS Certified Cloud Practitioner Certification | Amazon Web Services | March 2022
+                `;
+
+                const prompt = `
+                    I am a software developer with the following resume:
+                    ${resumeContent}
+
+                    Please write a professional cover letter for the following job description.
+                    Focus on highlighting relevant skills and experiences from my resume that match the job description.
+                    Keep the tone professional and concise.
+
+                    Job Description:
+                    ${jobDescription}
+                `;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        coverLetterOutput.innerText = text;
+                    } else {
+                        coverLetterOutput.innerText = "Failed to generate cover letter. Please try again.";
+                        console.error("Gemini API response structure unexpected:", result);
+                    }
+                } catch (error) {
+                    coverLetterOutput.innerText = "An error occurred while generating the cover letter. Please check your network connection or try again later.";
+                    console.error("Error calling Gemini API:", error);
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                    generateCoverLetterBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

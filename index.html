@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaurang Patel - Software Developer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFD;
+            color: #1a202c;
+        }
+        .nav-link {
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #38b2ac;
+            transform: translateY(-2px);
+        }
+        .timeline-item-content {
+            /* Content is always visible, no max-height or opacity transitions */
+            overflow: visible; /* Ensure content is not clipped */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+        .skill-btn.active {
+            background-color: #38b2ac;
+            color: white;
+            border-color: #38b2ac;
+        }
+        .skill-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-up.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.8s ease-out;
+        }
+        .fade-in.animate {
+            opacity: 1;
+        }
+
+        /* Timeline specific styles */
+        .timeline-item-wrapper {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            justify-content: flex-start; /* Default for mobile */
+        }
+
+        /* Vertical line - remains central */
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            width: 2px;
+            background-color: #e2e8f0; /* gray-200 */
+            height: calc(100% - 2rem); /* Adjust based on item padding */
+            transform: translateX(-50%);
+            top: 1rem; /* Start after padding */
+            z-index: 0;
+        }
+
+        /* Dot and horizontal connector */
+        .timeline-dot-connector {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 10;
+            position: relative;
+            margin: 0 1rem; /* Space between content and dot */
+        }
+
+        .timeline-dot {
+            width: 1.5rem; /* 24px */
+            height: 1.5rem; /* 24px */
+            background-color: #38b2ac; /* teal-600 */
+            border-radius: 9999px; /* full rounded */
+            border: 4px solid #fff; /* white border */
+            flex-shrink: 0;
+        }
+
+        .timeline-horizontal-line {
+            height: 2px;
+            background-color: #e2e8f0; /* gray-200 */
+            width: 2rem; /* 32px */
+        }
+
+        /* Content box */
+        .timeline-content-box {
+            flex-grow: 1; /* Allow content to take available space */
+            padding: 1rem;
+            box-sizing: border-box;
+            background-color: #ffffff; /* Add a background for clarity */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow-md */
+            border: 1px solid #f3f4f6; /* border-gray-100 */
+        }
+
+        /* Desktop adjustments */
+        @media (min-width: 768px) {
+            .timeline-item-wrapper {
+                justify-content: space-between; /* Push content to edges */
+            }
+            /* Odd items (1st, 3rd, etc.) will be on the left */
+            .timeline-item-wrapper:nth-child(odd) { 
+                flex-direction: row; /* Default order: content then dot-connector */
+                text-align: left;
+            }
+            /* Even items (2nd, 4th, etc.) will be on the right */
+            .timeline-item-wrapper:nth-child(even) { 
+                flex-direction: row-reverse; /* Reverse order: dot-connector then content */
+                text-align: right;
+            }
+            .timeline-content-box {
+                width: calc(50% - 4rem); /* Half width minus dot/connector space */
+            }
+            .timeline-dot-connector {
+                margin: 0; /* Reset margin for desktop, controlled by flex layout */
+            }
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 767px) {
+            .timeline-line {
+                left: 1.5rem; /* Align left for mobile */
+                transform: translateX(0);
+            }
+            .timeline-item-wrapper {
+                flex-direction: row; /* Always row for mobile */
+                justify-content: flex-start;
+                padding-left: 3.5rem; /* Space for dot and line */
+            }
+            .timeline-dot-connector {
+                position: absolute;
+                left: 1.5rem; /* Align with vertical line */
+                margin: 0;
+            }
+            .timeline-dot {
+                margin-left: -0.75rem; /* half of dot width to center on line */
+            }
+            .timeline-horizontal-line {
+                display: none; /* Hide horizontal line on mobile */
+            }
+            .timeline-content-box {
+                width: 100%; /* Full width content */
+                padding: 1rem;
+                text-align: left; /* Always left align on mobile */
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="home" class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-gray-800">Gaurang Patel</div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#about" class="nav-link text-gray-600">About</a>
+                <a href="#experience" class="nav-link text-gray-600">Experience</a>
+                <a href="#skills" class="nav-link text-gray-600">Skills</a>
+                <a href="#education" class="nav-link text-gray-600">Education</a>
+                <a href="#certifications" class="nav-link text-gray-600">Certifications</a>
+                <a href="#contact" class="nav-link text-gray-600">Contact</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#about" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">About</a>
+            <a href="#experience" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">Experience</a>
+            <a href="#skills" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">Skills</a>
+            <a href="#education" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">Education</a>
+            <a href="#certifications" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">Certifications</a>
+            <a href="#contact" class="block py-2 px-6 text-sm text-gray-700 hover:bg-gray-100">Contact</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="about" class="min-h-screen flex items-center">
+            <div class="w-full">
+                <h1 class="text-4xl md:text-6xl font-bold text-gray-800 leading-tight fade-in-up">Gaurang Patel</h1>
+                <h2 class="text-2xl md:text-3xl font-medium text-teal-600 mt-2 fade-in-up" style="transition-delay: 0.1s;">Lead Software Architect & Founder</h2>
+                <p class="mt-6 max-w-3xl text-lg text-gray-600 fade-in-up" style="transition-delay: 0.2s;">
+                    A seasoned Software Engineer with 4 years of extensive experience, specializing in the development of highly efficient and scalable web applications. Possessing a proven track record in full-stack development, leveraging technologies such as Laravel, Vue.js, and React.js. Dedicated to crafting clean, responsive code and committed to delivering high-quality, impactful solutions that significantly enhance user experience.
+                </p>
+                <div class="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 fade-in-up" style="transition-delay: 0.3s;">
+                    <a href="#contact" class="bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors duration-300 text-center">Get In Touch</a>
+                    <a href="http://quickpayments.ca/" target="_blank" class="border-2 border-teal-600 text-teal-600 font-bold py-3 px-6 rounded-lg hover:bg-teal-600 hover:text-white transition-colors duration-300 text-center">View Portfolio</a>
+                    <!-- <a href="cover_letter_generator.html" class="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors duration-300 text-center">AI Cover Letter</a> -->
+                    <a href="pdf/Gaurang_Patel_Resume.pdf" target="_blank" class="bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors duration-300 text-center">Download Resume (PDF)</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="highlights" class="py-16 fade-in">
+             <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">Career Highlights</h2>
+                <p class="text-gray-600 mt-2">Quantifiable impact across various projects.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up" style="transition-delay: 0.1s;">
+                    <h3 class="text-5xl font-extrabold text-teal-600" data-target="25">0</h3>
+                    <p class="mt-2 text-gray-600 font-medium">Reduction in Operational Costs</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up" style="transition-delay: 0.2s;">
+                    <h3 class="text-5xl font-extrabold text-teal-600" data-target="40">0</h3>
+                    <p class="mt-2 text-gray-600 font-medium">Reduction in Deployment Time</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up" style="transition-delay: 0.3s;">
+                    <h3 class="text-5xl font-extrabold text-teal-600" data-target="30">0</h3>
+                    <p class="mt-2 text-gray-600 font-medium">Reduction in Project Turnaround</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="experience" class="py-16 fade-in">
+            <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">Professional Experience</h2>
+                <p class="text-gray-600 mt-2">A timeline of my career growth and key responsibilities.</p>
+            </div>
+            <div class="relative max-w-3xl mx-auto py-8">
+                <div class="timeline-line"></div>
+                <div id="timeline-container" class="space-y-12">
+                    <!-- QuickPayments Experience (Left Aligned on Desktop) -->
+                    <div class="timeline-item-wrapper fade-in-up" style="transition-delay: 0.1s;">
+                        <div class="timeline-content-box">
+                            <div class="timeline-item-header">
+                                <p class="text-sm text-gray-500">April 2025 – Present</p>
+                                <h3 class="text-xl font-bold mt-1">Lead Software Architect & Founder</h3>
+                                <p class="text-md font-medium text-gray-700">QuickPayments</p>
+                            </div>
+                            <div class="timeline-item-content mt-4">
+                                <ul class="space-y-2 text-gray-600 list-disc list-inside">
+                                    <li>Spearheaded the end-to-end development of QuickPayments, a comprehensive payment platform.</li>
+                                    <li>Designed and implemented the core architecture using Laravel, Vue.js, and Inertia.js.</li>
+                                    <li>Integrated advanced payment functionalities including Laravel Stripe Connect and Stripe.</li>
+                                    <li>Utilized Laravel Spark for subscription billing and user management.</li>
+                                    <li>Managed cloud infrastructure on Laravel Cloud for high availability and scalability.</li>
+                                    <li>Responsible for all aspects of development, from conceptualization to deployment.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="timeline-dot-connector">
+                            <div class="timeline-horizontal-line"></div>
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-horizontal-line"></div>
+                        </div>
+                    </div>
+
+                    <!-- Timeless Veterinary Systems Experience (Right Aligned on Desktop) -->
+                    <div class="timeline-item-wrapper md:flex-row-reverse fade-in-up" style="transition-delay: 0.2s;">
+                        <div class="timeline-content-box">
+                            <div class="timeline-item-header">
+                                <p class="text-sm text-gray-500">May 2021 – Present</p>
+                                <h3 class="text-xl font-bold mt-1">Software Developer</h3>
+                                <p class="text-md font-medium text-gray-700">Timeless Veterinary Systems</p>
+                            </div>
+                            <div class="timeline-item-content mt-4">
+                                <ul class="space-y-2 text-gray-600 list-disc list-inside">
+                                    <li>Spearheaded cloud migration to AWS, reducing operational costs by 25%.</li>
+                                    <li>Developed a robust SAAS platform using Laravel and Vue.js, increasing user engagement by 20%.</li>
+                                    <li>Integrated CI/CD pipelines, reducing deployment time by 40%.</li>
+                                    <li>Collaborated with data scientists to implement machine learning models.</li>
+                                    <li>Automated unit testing with Jest, increasing test coverage by 20%.</li>
+                                    <li>Played a key role in developing a RESTful API for mobile applications.</li>
+                                    <li>Designed and implemented a real-time chat application using WebSocket technology.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="timeline-dot-connector">
+                            <div class="timeline-horizontal-line"></div>
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-horizontal-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="py-16 fade-in">
+            <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">Technical Skills</h2>
+                <p class="text-gray-600 mt-2">A visual breakdown of my technical proficiency.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="fade-in-up" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-center mb-4 text-gray-700">Core Competencies</h3>
+                    <div class="chart-container">
+                        <canvas id="skillsRadarChart"></canvas>
+                    </div>
+                </div>
+                <div class="fade-in-up" style="transition-delay: 0.2s;">
+                    <h3 class="text-xl font-bold text-center mb-4 text-gray-700">Languages & Frameworks</h3>
+                     <div class="flex flex-wrap justify-center gap-2 mb-4">
+                        <button class="skill-btn active px-4 py-2 text-sm font-medium border rounded-full transition" data-category="All">All</button>
+                        <button class="skill-btn px-4 py-2 text-sm font-medium border rounded-full transition" data-category="Web Frameworks">Web Frameworks</button>
+                        <button class="skill-btn px-4 py-2 text-sm font-medium border rounded-full transition" data-category="Programming Languages">Languages</button>
+                        <button class="skill-btn px-4 py-2 text-sm font-medium border rounded-full transition" data-category="DevOps">DevOps</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="skillsBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="education" class="py-16 fade-in">
+            <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">Education</h2>
+                <p class="text-gray-600 mt-2">My academic background.</p>
+            </div>
+            <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up" style="transition-delay: 0.1s;">
+                <h3 class="text-xl font-bold text-gray-800">Diploma in Computer Science</h3>
+                <p class="text-gray-700 mt-1">University of Regina, Regina, SK</p>
+                <p class="text-gray-500 text-sm mt-1">September 2020</p>
+            </div>
+        </section>
+
+        <section id="certifications" class="py-16 fade-in">
+            <div class="text-center mb-12 fade-in-up">
+                <h2 class="text-3xl font-bold text-gray-800">Certifications</h2>
+                <p class="text-gray-600 mt-2">Professional qualifications.</p>
+            </div>
+            <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 fade-in-up" style="transition-delay: 0.1s;">
+                <h3 class="text-xl font-bold text-gray-800">AWS Certified Cloud Practitioner Certification</h3>
+                <p class="text-gray-700 mt-1">Amazon Web Services</p>
+                <p class="text-gray-500 text-sm mt-1">March 2022</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12" id="contact">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold">Let's Connect</h2>
+            <p class="mt-4 max-w-xl mx-auto">I'm currently seeking new opportunities and would love to hear from you. Feel free to reach out via email or phone.</p>
+            <div class="mt-8 space-y-4 md:space-y-0 md:space-x-8 flex flex-col md:flex-row justify-center items-center">
+                <a href="mailto:patel7483g@gmail.com" class="hover:text-teal-400 transition-colors">patel7483g@gmail.com</a>
+                <span>&bull;</span>
+                <a href="tel:+13068079114" class="hover:text-teal-400 transition-colors">+1 (306) 807-9114</a>
+                <span>&bull;</span>
+                <span>Edmonton, AB</span>
+            </div>
+            <p class="mt-8 text-sm text-gray-400">&copy; 2025 Gaurang Patel. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Mobile Menu Toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            document.querySelectorAll('#mobile-menu a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+
+            // Animated Counters
+            const counters = document.querySelectorAll('[data-target]');
+            const speed = 200;
+
+            const animateCounter = (counter) => {
+                const target = +counter.getAttribute('data-target');
+                const updateCount = () => {
+                    const count = +counter.innerText;
+                    const increment = target / speed;
+                    if (count < target) {
+                        counter.innerText = Math.ceil(count + increment);
+                        setTimeout(updateCount, 1);
+                    } else {
+                        counter.innerText = target;
+                    }
+                };
+                updateCount();
+            };
+
+            const counterObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounter(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            counters.forEach(counter => counterObserver.observe(counter));
+
+            // General Fade-in-up and Fade-in animations on scroll
+            const animatedElements = document.querySelectorAll('.fade-in-up, .fade-in');
+            const animationObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        if (!entry.target.classList.contains('highlight-animation')) { 
+                            observer.unobserve(entry.target);
+                        }
+                    } 
+                });
+            }, { threshold: 0.1 }); 
+
+            animatedElements.forEach(element => animationObserver.observe(element));
+
+
+            // Skills Charts
+            const radarCtx = document.getElementById('skillsRadarChart').getContext('2d');
+            const barCtx = document.getElementById('skillsBarChart').getContext('2d');
+            
+            const skillsData = {
+                "Programming Languages": [
+                    { name: 'PHP', level: 95 },
+                    { name: 'JavaScript', level: 90 },
+                    { name: 'Python', level: 75 },
+                ],
+                "Web Frameworks": [
+                    { name: 'Laravel', level: 98 },
+                    { name: 'Vue.js', level: 92 },
+                    { name: 'React.js', level: 85 },
+                    { name: 'Inertia.js', level: 88 },
+                    { name: 'Tailwind', level: 95 },
+                ],
+                "Databases": [
+                    { name: 'MySQL', level: 90 },
+                    { name: 'PostgreSQL', level: 80 },
+                    { name: 'MongoDB', level: 70 },
+                ],
+                "DevOps": [
+                    { name: 'Docker', level: 80 },
+                    { name: 'AWS', level: 85 },
+                    { name: 'GitHub Actions', level: 88 },
+                    { name: 'Kubernetes', level: 65 },
+                ]
+            };
+
+            const radarChart = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Backend (PHP/Laravel)', 'Frontend (JS/Vue/React)', 'DevOps (AWS/Docker)', 'Databases (SQL/NoSQL)'],
+                    datasets: [{
+                        label: 'Competency',
+                        data: [95, 90, 85, 85],
+                        backgroundColor: 'rgba(56, 178, 172, 0.2)',
+                        borderColor: 'rgb(56, 178, 172)',
+                        pointBackgroundColor: 'rgb(56, 178, 172)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(56, 178, 172)'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 2
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#334155'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#64748b',
+                                stepSize: 25,
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            let barChart;
+            const createBarChart = (data) => {
+                if(barChart) {
+                    barChart.destroy();
+                }
+                barChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{
+                            label: 'Proficiency',
+                            data: data.map(d => d.level),
+                            backgroundColor: 'rgba(56, 178, 172, 0.7)',
+                            borderColor: 'rgb(56, 178, 172)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const allSkills = Object.values(skillsData).flat();
+            createBarChart(allSkills);
+
+            document.querySelectorAll('.skill-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    document.querySelector('.skill-btn.active').classList.remove('active');
+                    e.target.classList.add('active');
+
+                    const category = e.target.dataset.category;
+                    const dataToShow = category === 'All' ? allSkills : skillsData[category];
+                    createBarChart(dataToShow);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
